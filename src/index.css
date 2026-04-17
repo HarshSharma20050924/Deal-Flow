@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  
+  --color-brand-accent: #0A8356;
+  --color-brand-accent-hover: #086944;
+  --color-brand-accent-subtle: #E8F5E9;
+  
+  --color-text-primary: #1A1A1A;
+  --color-text-secondary: #666666;
+  
+  --color-border-subtle: #E6E6E6;
+  
+  --color-bg-base: #FFFFFF;
+  --color-bg-workspace: #FAFAFA;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-workspace);
+  color: var(--color-text-primary);
+}
