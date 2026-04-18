@@ -14,6 +14,9 @@ export function Auth() {
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
     });
     if (error) addToast(error.message, "error");
   };
@@ -28,7 +31,8 @@ export function Auth() {
           email,
           password,
           options: {
-            data: { full_name: name }
+            data: { full_name: name },
+            emailRedirectTo: window.location.origin
           }
         });
         if (error) throw error;

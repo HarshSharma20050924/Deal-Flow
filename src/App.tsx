@@ -14,34 +14,50 @@ import { supabase } from "./lib/supabase";
 
 export default function App() {
   const [appState, setAppState] = useState<"intro" | "auth" | "app">("intro");
+  const [hasCompletedIntro, setHasCompletedIntro] = useState(() => {
+    return localStorage.getItem("deal_flow_intro_done") === "true";
+  });
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [userName, setUserName] = useState("User");
   const [greeting, setGreeting] = useState("Hello");
 
   useEffect(() => {
-    // Check initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUserName(session.user.user_metadata.full_name || session.user.email?.split('@')[0] || "User");
-        setNeedsOnboarding(!session.user.user_metadata.profession_setup);
-        setAppState("app");
-      }
-    });
+    // If intro was already done on a previous visit, we skip it
+    if (hasCompletedIntro) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setUserName(session.user.user_metadata.full_name || session.user.email?.split('@')[0] || "User");
+          setNeedsOnboarding(!session.user.user_metadata.profession_setup);
+          setAppState("app");
+        } else {
+          setAppState("auth");
+        }
+      });
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
+      if (session && hasCompletedIntro) {
         setUserName(session.user.user_metadata.full_name || session.user.email?.split('@')[0] || "User");
         setNeedsOnboarding(!session.user.user_metadata.profession_setup);
         setAppState("app");
-      } else {
+      } else if (!session && hasCompletedIntro) {
         setAppState("auth");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [hasCompletedIntro]);
+
+  const handleIntroComplete = () => {
+    localStorage.setItem("deal_flow_intro_done", "true");
+    setHasCompletedIntro(true);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setAppState("app");
+      else setAppState("auth");
+    });
+  };
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -55,7 +71,7 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ToastProvider>
-        {appState === "intro" && <Intro onComplete={() => setAppState("auth")} />}
+        {appState === "intro" && <Intro onComplete={handleIntroComplete} />}
         
         {appState === "auth" && <Auth />}
  
