@@ -27,19 +27,17 @@ export function Campaigns() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex justify-between items-end p-12 shrink-0 border-b border-border-subtle bg-bg-base">
-        <div>
-          <h1 className="text-2xl font-medium tracking-tight mb-2">Campaigns</h1>
-          <p className="text-sm text-text-secondary">Track and manage your automated outreach operations.</p>
-        </div>
+      <div className="p-6 sm:p-12 shrink-0 border-b border-border-subtle bg-bg-base">
+        <h1 className="text-xl sm:text-2xl font-medium tracking-tight mb-2">Campaigns</h1>
+        <p className="text-xs sm:text-sm text-text-secondary">Track and manage your automated outreach operations.</p>
       </div>
-
-      <div className="flex-1 p-12 overflow-y-auto bg-bg-workspace">
+ 
+      <div className="flex-1 p-4 sm:p-12 overflow-y-auto bg-bg-workspace">
         {isLoading ? (
           <div className="flex items-center justify-center h-64 text-text-secondary text-xs uppercase tracking-widest">Initialising...</div>
         ) : campaigns.length === 0 ? (
-          <div className="border border-dashed border-border-subtle p-12 flex flex-col items-center justify-center text-center">
-            <p className="text-sm text-text-secondary mb-4">No active campaigns found. Start one from the Command Bar.</p>
+          <div className="border border-dashed border-border-subtle p-8 sm:p-12 flex flex-col items-center justify-center text-center">
+            <p className="text-xs sm:text-sm text-text-secondary mb-4">No active campaigns found. Start one from the Command Bar.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">

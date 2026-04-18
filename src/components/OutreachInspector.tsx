@@ -140,11 +140,11 @@ export function OutreachInspector({ leadId, onClose }: OutreachInspectorProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           <div className="flex flex-col">
             {/* Lead Info Section */}
-            <div className="p-8 lg:p-10 border-b border-border-subtle">
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary mb-6">Contact Details</h2>
+            <div className="p-6 sm:p-10 border-b border-border-subtle">
+              <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary mb-4 sm:mb-6">Contact Details</h2>
               <div className="flex flex-col gap-1">
-                <span className="text-xl lg:text-2xl font-medium text-text-primary tracking-tight">{data.first_name} {data.last_name}</span>
-                <span className="text-base text-text-secondary">{data.company}</span>
+                <span className="text-xl sm:text-2xl font-medium text-text-primary tracking-tight">{data.first_name} {data.last_name}</span>
+                <span className="text-sm sm:text-base text-text-secondary">{data.company}</span>
               </div>
 
               {/* Channel Badges */}
@@ -175,12 +175,12 @@ export function OutreachInspector({ leadId, onClose }: OutreachInspectorProps) {
               </div>
 
               {/* Source */}
-              <div className="bg-bg-workspace p-4 border border-border-subtle mt-6">
-                <div className="flex items-center justify-between">
+              <div className="bg-bg-workspace p-4 border border-border-subtle mt-4 sm:mt-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <span className="text-[10px] text-text-secondary font-medium">
                     Found via {data.metadata?.source === 'Auto-Server' ? 'Automated Discovery' : 'Manual'} · {new Date(data.created_at).toLocaleDateString()}
                   </span>
-                  <span className={`text-[9px] uppercase font-bold ${data.status === 'contacted' ? 'text-green-500' : data.status === 'drafted' ? 'text-brand-accent' : 'text-text-secondary'}`}>
+                  <span className={`text-[9px] uppercase font-bold self-start sm:self-auto ${data.status === 'contacted' ? 'text-green-500' : data.status === 'drafted' ? 'text-brand-accent' : 'text-text-secondary'}`}>
                     {data.status}
                   </span>
                 </div>
@@ -188,7 +188,7 @@ export function OutreachInspector({ leadId, onClose }: OutreachInspectorProps) {
             </div>
     
             {/* Drafts Section */}
-            <div className="p-8 lg:p-10 flex flex-col bg-bg-workspace/10">
+            <div className="p-6 sm:p-10 flex flex-col bg-bg-workspace/10">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">AI Drafted Messages</h2>
                 <div className="flex w-full sm:w-auto gap-2">

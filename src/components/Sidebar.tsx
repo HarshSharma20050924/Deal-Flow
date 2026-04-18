@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Box, Home, Users, Settings, LayoutTemplate, LogOut, Mail, Bell } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 const NAV_ITEMS = [
   { id: "overview", label: "Overview", icon: Home },
@@ -11,6 +13,7 @@ const NAV_ITEMS = [
 
 export function Sidebar({ activeTab, setActiveTab, userName, isOpen, onClose }: { activeTab: string, setActiveTab: (id: string) => void, userName: string, isOpen?: boolean, onClose?: () => void }) {
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   
   const initials = userName
     .split(" ")
@@ -94,23 +97,45 @@ export function Sidebar({ activeTab, setActiveTab, userName, isOpen, onClose }: 
         </nav>
         
         <div className="mt-auto px-6">
-          <div className="border-t border-border-subtle pt-4 pb-4 flex items-center justify-between group cursor-pointer">
+          <button 
+            onClick={() => setIsLogoutConfirmOpen(true)}
+            className="w-full border-t border-border-subtle pt-4 pb-4 flex items-center justify-between group cursor-pointer text-left"
+          >
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-8 h-8 bg-bg-workspace border border-border-subtle rounded-full flex items-center justify-center text-xs font-medium text-text-secondary shrink-0">
+              <div className="w-8 h-8 bg-bg-workspace border border-border-subtle rounded-full flex items-center justify-center text-xs font-medium text-text-secondary shrink-0 group-hover:border-brand-accent/50 transition-colors">
                 {initials}
               </div>
               <div className="flex flex-col items-start overflow-hidden">
-                <span className="text-sm font-medium whitespace-nowrap truncate w-24">{userName}</span>
-                <span className="text-xs text-text-secondary truncate w-24">Workspace</span>
+                <span className="text-sm font-medium whitespace-nowrap truncate w-24 group-hover:text-brand-accent transition-colors">{userName}</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-text-secondary/60">Active Session</span>
               </div>
             </div>
-            <LogOut className="w-4 h-4 text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <div className="text-[10px] text-text-secondary font-light uppercase tracking-widest pt-2">
-            v2.4.1 // Protocol Active
+            <div className="flex items-center gap-2 text-text-secondary group-hover:text-red-500 transition-colors">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Exit</span>
+              <LogOut className="w-4 h-4" />
+            </div>
+          </button>
+          <div className="text-[10px] text-text-secondary/40 font-light uppercase tracking-widest pt-2 border-t border-border-subtle/30">
+            v2.4.1 // Secure Node
           </div>
         </div>
       </aside>
+
+      <ConfirmationModal 
+        isOpen={isLogoutConfirmOpen}
+        title="Sign Out"
+        message="Are you sure you want to exit your current session? You will need to sign in again to access your workspace."
+        confirmLabel="Sign Out"
+        onConfirm={async () => {
+          try {
+            await supabase.auth.signOut();
+          } catch (err: any) {
+            console.error("Sign out error:", err.message);
+          }
+        }}
+        onCancel={() => setIsLogoutConfirmOpen(false)}
+        isDestructive={true}
+      />
     </>
   );
 }

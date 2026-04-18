@@ -3,6 +3,7 @@ import { useToast } from "./ToastContext";
 import { Send, Users, Shield, CreditCard, ChevronDown, Check, Save } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { PreferenceRepository } from "../repositories/preference.repository";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 export function Preferences() {
   const { addToast } = useToast();
@@ -15,9 +16,9 @@ export function Preferences() {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Operator");
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   
   const prefRepo = new PreferenceRepository();
 
@@ -120,28 +121,28 @@ export function Preferences() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto p-12 max-w-5xl relative">
-      <div className="mb-12 flex justify-between items-end">
+    <div className="flex flex-col h-full overflow-y-auto p-4 sm:p-6 lg:p-12 max-w-5xl relative">
+      <div className="mb-8 sm:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight mb-2">Preferences</h1>
-          <p className="text-sm text-text-secondary">System, account, and billing configuration.</p>
+          <h1 className="text-xl sm:text-2xl font-medium tracking-tight mb-2">Preferences</h1>
+          <p className="text-xs sm:text-sm text-text-secondary">System, account, and billing configuration.</p>
         </div>
         <button 
           onClick={handleSave}
-          className="flex items-center text-sm font-medium bg-brand-accent text-white px-6 py-2 hover:bg-brand-accent-hover transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center text-xs sm:text-sm font-medium bg-brand-accent text-white px-6 py-2.5 sm:py-2 hover:bg-brand-accent-hover transition-colors"
         >
           <Save className="w-4 h-4 mr-2" /> Save All Changes
         </button>
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-8 sm:space-y-12">
         {/* PROFILE SECTION */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
+        <section className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:gap-12 border-b border-border-subtle pb-8 sm:pb-12">
           <div>
             <h2 className="text-sm font-medium mb-2">Profile</h2>
             <p className="text-xs text-text-secondary leading-relaxed">Update your personal information and contact details.</p>
           </div>
-          <div className="space-y-6 bg-bg-base p-8 border border-border-subtle">
+          <div className="space-y-6 bg-bg-base p-5 sm:p-8 border border-border-subtle">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">First Name</label>
@@ -170,12 +171,12 @@ export function Preferences() {
         </section>
 
         {/* BUSINESS PROFILES SECTION */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
+        <section className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:gap-12 border-b border-border-subtle pb-8 sm:pb-12">
           <div>
             <h2 className="text-sm font-medium mb-2">Business Identities</h2>
             <p className="text-xs text-text-secondary leading-relaxed">Define the professional context for your searches and outreach. Add multiple profiles to switch between different sales perspectives.</p>
           </div>
-          <div className="space-y-6 bg-bg-base p-8 border border-border-subtle">
+          <div className="space-y-6 bg-bg-base p-5 sm:p-8 border border-border-subtle">
             <div className="space-y-4">
               {(user?.user_metadata?.profession_profiles || [user?.user_metadata?.profession || "Software Services"]).map((p: string) => (
                 <div 
@@ -256,12 +257,12 @@ export function Preferences() {
         </section>
 
         {/* WORKSPACE & LIMITS */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
+        <section className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:gap-12 border-b border-border-subtle pb-8 sm:pb-12">
           <div>
             <h2 className="text-sm font-medium mb-2">Limits & AI</h2>
             <p className="text-xs text-text-secondary leading-relaxed mb-4">Manage daily outreach volume and default AI keys.</p>
           </div>
-          <div className="bg-bg-base p-8 border border-border-subtle space-y-6">
+          <div className="bg-bg-base p-5 sm:p-8 border border-border-subtle space-y-6">
             <div>
               <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Daily Sending Limit</label>
               <input 
@@ -285,12 +286,12 @@ export function Preferences() {
         </section>
 
         {/* BILLING & USAGE */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12 opacity-50 filter grayscale pointer-events-none">
+        <section className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:gap-12 border-b border-border-subtle pb-8 sm:pb-12 opacity-50 filter grayscale pointer-events-none">
           <div>
             <h2 className="text-sm font-medium mb-2">Billing & Usage</h2>
             <p className="text-xs text-text-secondary leading-relaxed">Enterprise billing is managed via organization owner.</p>
           </div>
-          <div className="bg-bg-base p-8 border border-border-subtle">
+          <div className="bg-bg-base p-5 sm:p-8 border border-border-subtle">
              <div className="flex items-start justify-between mb-8">
                <div>
                  <h3 className="text-sm font-medium">Enterprise Tier</h3>
@@ -299,6 +300,40 @@ export function Preferences() {
              </div>
           </div>
         </section>
+
+        {/* DANGER ZONE / SIGN OUT */}
+        <section className="flex flex-col md:grid md:grid-cols-[1fr_2fr] gap-6 md:gap-12 pb-12">
+          <div>
+            <h2 className="text-sm font-medium mb-2 text-red-500">Security</h2>
+            <p className="text-xs text-text-secondary leading-relaxed">Manage your active session and account security.</p>
+          </div>
+          <div className="bg-bg-base p-5 sm:p-8 border border-red-100 border-dashed">
+             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div>
+                   <h3 className="text-sm font-medium text-text-primary">Sign Out</h3>
+                   <p className="text-xs text-text-secondary mt-1">Terminate your active session on this device.</p>
+                </div>
+                <button 
+                  onClick={() => setIsLogoutConfirmOpen(true)}
+                  className="w-full sm:w-auto px-6 py-2 border border-red-200 text-red-600 text-xs font-bold uppercase tracking-widest hover:bg-red-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+             </div>
+          </div>
+        </section>
+
+        <ConfirmationModal 
+          isOpen={isLogoutConfirmOpen}
+          title="Sign Out"
+          message="Are you sure you want to terminate your current session? You will need to re-authenticate to access your deal flow pipeline."
+          confirmLabel="Sign Out"
+          onConfirm={async () => {
+             await supabase.auth.signOut();
+          }}
+          onCancel={() => setIsLogoutConfirmOpen(false)}
+          isDestructive={true}
+        />
       </div>
     </div>
   );

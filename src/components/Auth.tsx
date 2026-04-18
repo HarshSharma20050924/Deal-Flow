@@ -27,7 +27,7 @@ export function Auth() {
     
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -35,7 +35,23 @@ export function Auth() {
             emailRedirectTo: window.location.origin
           }
         });
-        if (error) throw error;
+        
+        if (error) {
+          if (error.message.toLowerCase().includes("already registered") || error.status === 400) {
+            addToast("This email is already registered. Please sign in instead.", "info");
+            setIsSignUp(false); // Switch to sign in mode
+            return;
+          }
+          throw error;
+        }
+        
+        // Supabase sometimes returns data but with an identities array that is empty if user exists
+        if (data?.user && data.user.identities && data.user.identities.length === 0) {
+          addToast("This email is already registered. Please sign in instead.", "info");
+          setIsSignUp(false);
+          return;
+        }
+
         addToast("Check your email for the confirmation link!", "info");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -52,9 +68,9 @@ export function Auth() {
   };
 
   return (
-    <div className="h-screen w-screen bg-bg-workspace flex items-center justify-center">
-      <div className="w-full max-w-sm bg-bg-base border border-border-subtle p-12">
-        <h1 className="text-xl font-medium tracking-tight mb-2">
+    <div className="min-h-screen w-screen bg-bg-workspace flex items-center justify-center p-4">
+      <div className="w-full max-w-sm bg-bg-base border border-border-subtle p-6 sm:p-12 shadow-sm rounded-sm">
+        <h1 className="text-xl sm:text-2xl font-medium tracking-tight mb-2">
           {isSignUp ? "Create Account" : "Sign In"}
         </h1>
         <p className="text-sm text-text-secondary mb-8">

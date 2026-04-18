@@ -177,19 +177,19 @@ export function Workflows() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex justify-between items-end p-12 shrink-0 border-b border-border-subtle bg-bg-base z-10 relative">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end p-6 sm:p-12 shrink-0 border-b border-border-subtle bg-bg-base z-10 relative gap-6">
         <div>
-          <h1 className="text-2xl font-medium tracking-tight mb-2">Workflows</h1>
-          <p className="text-sm text-text-secondary">Visual sequence and logic builder.</p>
+          <h1 className="text-xl sm:text-2xl font-medium tracking-tight mb-2">Workflows</h1>
+          <p className="text-xs sm:text-sm text-text-secondary">Visual sequence and logic builder.</p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full sm:w-auto">
            <div className="flex items-center border border-border-subtle bg-bg-workspace p-1">
-              <button onClick={handleAddAction} className="flex items-center text-[10px] uppercase tracking-wider font-medium hover:text-brand-accent transition-colors px-3 py-1 text-text-secondary">
+              <button onClick={handleAddAction} className="flex-1 sm:flex-none flex items-center justify-center text-[10px] uppercase tracking-wider font-medium hover:text-brand-accent transition-colors px-3 py-1.5 sm:py-1 text-text-secondary">
                 <Plus className="w-3.5 h-3.5 mr-1.5" /> Action
               </button>
               <div className="w-px h-4 bg-border-subtle" />
-              <button className="flex items-center text-[10px] uppercase tracking-wider font-medium hover:text-brand-accent transition-colors px-3 py-1 text-text-secondary">
+              <button className="flex-1 sm:flex-none flex items-center justify-center text-[10px] uppercase tracking-wider font-medium hover:text-brand-accent transition-colors px-3 py-1.5 sm:py-1 text-text-secondary">
                 <GitBranch className="w-3.5 h-3.5 mr-1.5" /> Condition
               </button>
            </div>
@@ -197,7 +197,7 @@ export function Workflows() {
            <button 
              onClick={handleDeploy}
              disabled={isDeploying}
-             className="flex items-center text-sm font-medium transition-colors bg-brand-accent text-white hover:bg-brand-accent-hover px-6 py-2 disabled:opacity-50"
+             className="flex items-center justify-center text-xs sm:text-sm font-medium transition-colors bg-brand-accent text-white hover:bg-brand-accent-hover px-6 py-2.5 sm:py-2 disabled:opacity-50"
            >
              {isDeploying ? (
                <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-2" />

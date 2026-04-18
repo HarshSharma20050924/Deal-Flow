@@ -80,11 +80,10 @@ export default function App() {
             {needsOnboarding && <Onboarding onComplete={() => setNeedsOnboarding(false)} />}
             
             {/* Mobile Top Bar */}
-            <div className="lg:hidden flex items-center justify-between px-6 py-4 bg-bg-base border-b border-border-subtle z-40">
-              <h1 className="text-lg font-medium tracking-tight">Deal Flow<span className="text-brand-accent">.</span></h1>
+            <div className="lg:hidden flex items-center gap-4 px-6 py-4 bg-bg-base border-b border-border-subtle z-40">
               <button 
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 -mr-2 text-text-secondary hover:text-text-primary transition-colors"
+                className="p-1 -ml-1 text-text-secondary hover:text-text-primary transition-colors"
               >
                 <div className="w-5 h-4 flex flex-col justify-between">
                   <span className="w-full h-0.5 bg-current rounded-full" />
@@ -92,6 +91,7 @@ export default function App() {
                   <span className="w-full h-0.5 bg-current rounded-full" />
                 </div>
               </button>
+              <h1 className="text-lg font-medium tracking-tight">Deal Flow<span className="text-brand-accent">.</span></h1>
             </div>
 
             <Sidebar 

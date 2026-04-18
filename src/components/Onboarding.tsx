@@ -37,26 +37,26 @@ export function Onboarding({ onComplete }: { onComplete: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-bg-workspace flex items-center justify-center p-6 backdrop-blur-md">
+    <div className="fixed inset-0 z-[100] bg-bg-workspace flex items-center justify-center p-4 sm:p-6 backdrop-blur-md">
       <div className="bg-bg-base border border-border-subtle w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="p-10">
-          <div className="mb-10 text-center">
-             <div className="w-16 h-16 bg-brand-accent/10 border border-brand-accent/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Briefcase className="w-8 h-8 text-brand-accent" />
+        <div className="p-6 sm:p-10">
+          <div className="mb-8 sm:mb-10 text-center">
+             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-brand-accent/10 border border-brand-accent/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                <Briefcase className="w-6 h-6 sm:w-8 sm:h-8 text-brand-accent" />
              </div>
-             <h1 className="text-2xl font-medium tracking-tight mb-2">Configure Workspace</h1>
-             <p className="text-sm text-text-secondary">What is your primary business or professional focus?</p>
+             <h1 className="text-xl sm:text-2xl font-medium tracking-tight mb-2">Configure Workspace</h1>
+             <p className="text-xs sm:text-sm text-text-secondary px-4">What is your primary business or professional focus?</p>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 mb-10">
+ 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-8 sm:mb-10">
             {professions.map((p) => (
               <button
                 key={p}
                 onClick={() => setProfession(p)}
-                className={`flex items-center gap-3 p-4 border transition-all text-left ${profession === p ? "bg-brand-accent border-brand-accent text-white" : "bg-bg-workspace border-border-subtle hover:border-brand-accent/50 text-text-primary"}`}
+                className={`flex items-center gap-3 p-3 sm:p-4 border transition-all text-left ${profession === p ? "bg-brand-accent border-brand-accent text-white" : "bg-bg-workspace border-border-subtle hover:border-brand-accent/50 text-text-primary"}`}
               >
-                <div className={`w-2 h-2 rounded-full ${profession === p ? "bg-white" : "bg-border-subtle"}`} />
-                <span className="text-xs font-semibold uppercase tracking-wider">{p}</span>
+                <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${profession === p ? "bg-white" : "bg-border-subtle"}`} />
+                <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">{p}</span>
               </button>
             ))}
             

@@ -85,17 +85,17 @@ export function CommandBar() {
 
   return (
     <>
-      <div className="relative flex items-center bg-bg-base border border-border-subtle p-2 group focus-within:border-text-primary transition-colors">
-        <Terminal className="w-4 h-4 text-text-secondary ml-3 mr-4 shrink-0" />
+      <div className="relative flex items-center bg-bg-base border border-border-subtle p-1 sm:p-2 group focus-within:border-text-primary transition-colors">
+        <Terminal className="hidden sm:block w-4 h-4 text-text-secondary ml-3 mr-4 shrink-0" />
         <input
           type="text"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Who are we looking for? (e.g., 'hotels in indore')"
-          className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-[#BBBBBB]"
+          placeholder="Who are we looking for?"
+          className="flex-1 bg-transparent border-none outline-none text-xs sm:text-sm placeholder:text-[#BBBBBB] px-3 sm:px-0 h-10"
           onKeyDown={(e) => e.key === 'Enter' && handleRun()}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-1 sm:gap-2">
            {prompt && (
              <button 
                onClick={() => setPrompt("")}
@@ -107,9 +107,9 @@ export function CommandBar() {
            <button
              onClick={handleRun}
              disabled={isProcessing || !prompt}
-             className="ml-2 px-6 py-2.5 bg-text-primary hover:bg-transparent hover:text-text-primary text-white hover:border-text-primary text-sm font-medium transition-colors border border-text-primary flex items-center h-full disabled:opacity-50"
+             className="px-4 sm:px-6 py-2 bg-text-primary hover:bg-transparent hover:text-text-primary text-white hover:border-text-primary text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-all border border-text-primary flex items-center shrink-0 disabled:opacity-50"
            >
-             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Search <ArrowRight className="ml-2 w-4 h-4" /></>}
+             {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : <><span className="hidden sm:inline">Search</span> <ArrowRight className="sm:ml-2 w-3 h-3" /></>}
            </button>
         </div>
       </div>
