@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
+    "@sparticuz/chromium": "^147.0.1",
     "@supabase/supabase-js": "^2.103.3",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -24,6 +25,7 @@
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "papaparse": "^5.5.3",
+    "puppeteer-core": "^24.41.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "reactflow": "^11.11.4",

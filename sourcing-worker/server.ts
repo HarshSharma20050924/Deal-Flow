@@ -4,7 +4,15 @@ import { ScraperService } from "./services/scraper.service.js";
 import { GhostwriterAgent } from "./agents/ghostwriter.agent.js";
 import { LeadRepository } from "./repositories/lead.repository.js";
 
+import express from "express";
+
 dotenv.config({ override: true });
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+app.get("/health", (req, res) => res.send("Worker Active"));
+app.listen(port, () => console.log(`[Worker] Health check active on port ${port}`));
 
 const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const config = {
@@ -122,7 +130,17 @@ async function checkAndProcess() {
   await ghostwriter.draftForQualifiedLeads(10);
 }
 
-// Poll every 10 seconds
-console.log("Deal-Flow Server Started.");
-setInterval(checkAndProcess, 10000);
-checkAndProcess();
+// Poll or Run Once
+const runOnce = process.argv.includes("--once");
+
+if (runOnce) {
+  console.log("[Worker] Running single cycle...");
+  checkAndProcess().then(() => {
+    console.log("[Worker] Cycle complete. Exiting.");
+    process.exit(0);
+  });
+} else {
+  console.log("Deal-Flow Server Started (Polling Mode).");
+  setInterval(checkAndProcess, 10000);
+  checkAndProcess();
+}

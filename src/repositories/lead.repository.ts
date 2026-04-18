@@ -6,8 +6,7 @@ export class LeadRepository {
     let query = supabase.from('leads').select('*');
     if (filters?.limit) query = query.limit(filters.limit);
     if (filters?.campaignId) {
-      // Primary filter using metadata which we know exists based on worker logic
-      query = query.eq('metadata->>campaign_id', filters.campaignId);
+      query = query.eq('campaign_id', filters.campaignId);
     }
     
     const { data, error } = await query.order('created_at', { ascending: false });
