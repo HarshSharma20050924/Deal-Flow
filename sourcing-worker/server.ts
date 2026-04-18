@@ -104,6 +104,7 @@ async function checkAndProcess() {
           status: 'new',
           score: (email && normalizedPhone) ? 95 : normalizedPhone ? 85 : 60,
           campaign_id: campaign.id,
+          user_id: campaign.user_id, // Vital for multi-tenancy
           metadata: { 
             phone: normalizedPhone || null,
             original_phone: result.phone || null,
@@ -111,6 +112,7 @@ async function checkAndProcess() {
             website: result.website || null,
             source: 'Auto-Server', 
             campaign_id: campaign.id,
+            user_id: campaign.user_id,
             channels: channels,
           }
         });
