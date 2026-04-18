@@ -1,89 +1,113 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ReactFlow, Background, Controls, addEdge, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange, Edge, Connection } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Plus, Settings, Play, ArrowRight, GitBranch } from "lucide-react";
 import { useToast } from "./ToastContext";
+import { WorkflowRepository } from "../repositories/workflow.repository";
 
-// Minimal Deal Flow theme nodes
+// High-fidelity production nodes
 const initialNodes = [
   { 
     id: "1", 
-    position: { x: 250, y: 50 }, 
-    data: { label: "TRIGGER: Lead Identified" },
+    position: { x: 250, y: 0 }, 
+    data: { label: "TRIGGER: New Market Brief" },
     type: 'input',
     style: { 
-      border: "1px solid #E6E6E6", 
+      border: "1px solid #000", 
       borderRadius: "0", 
-      padding: "16px", 
+      padding: "20px", 
       background: "#fff", 
-      fontSize: "12px", 
-      fontWeight: 500,
-      width: 240,
+      fontSize: "11px", 
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: "0.1em",
+      width: 260,
     }
   },
   { 
     id: "2", 
-    position: { x: 250, y: 150 }, 
-    data: { label: "Wait exactly 3 days" },
+    position: { x: 250, y: 120 }, 
+    data: { label: "ACTION: Google Maps Discovery" },
     style: { 
       border: "1px solid #E6E6E6", 
-      borderLeft: "2px solid #0A8356",
+      borderLeft: "3px solid #0A8356",
       borderRadius: "0", 
-      padding: "16px", 
+      padding: "20px", 
       background: "#FAFAFA", 
-      fontSize: "12px", 
-      color: "#666",
-      width: 240,
+      fontSize: "11px", 
+      color: "#1A1A1A",
+      fontWeight: 600,
+      width: 260,
     }
   },
   { 
     id: "3", 
-    position: { x: 250, y: 250 }, 
-    data: { label: "CONDITION: Did lead open email?" },
+    position: { x: 250, y: 240 }, 
+    data: { label: "ACTION: AI Ghostwriter Synthesis" },
     style: { 
-      border: "1px solid #0A8356", 
+      border: "1px solid #E6E6E6", 
+      borderLeft: "3px solid #0A8356",
       borderRadius: "0", 
-      padding: "16px", 
-      background: "#fff", 
-      fontSize: "12px", 
-      color: "#0A8356",
-      fontWeight: 500,
-      width: 240,
+      padding: "20px", 
+      background: "#FAFAFA", 
+      fontSize: "11px", 
+      color: "#1A1A1A",
+      fontWeight: 600,
+      width: 260,
     }
   },
   { 
     id: "4", 
-    position: { x: 100, y: 350 }, 
-    data: { label: "YES: Send Sequence B" },
+    position: { x: 250, y: 360 }, 
+    data: { label: "CONDITION: Score > 80%" },
     style: { 
-      border: "1px solid #E6E6E6", 
+      border: "1px solid #0A8356", 
       borderRadius: "0", 
-      padding: "16px", 
+      padding: "20px", 
       background: "#fff", 
-      fontSize: "12px",
-      width: 220,
+      fontSize: "11px", 
+      color: "#0A8356",
+      fontWeight: 700,
+      textTransform: "uppercase",
+      width: 260,
     }
   },
   { 
     id: "5", 
-    position: { x: 400, y: 350 }, 
-    data: { label: "NO: Send Sequence C" },
+    position: { x: 50, y: 480 }, 
+    data: { label: "YES: Auto-Deploy to Gmail" },
     style: { 
       border: "1px solid #E6E6E6", 
       borderRadius: "0", 
-      padding: "16px", 
+      padding: "20px", 
       background: "#fff", 
-      fontSize: "12px", 
-      width: 220,
+      fontSize: "11px",
+      fontWeight: 500,
+      width: 200,
+    }
+  },
+  { 
+    id: "6", 
+    position: { x: 450, y: 480 }, 
+    data: { label: "NO: Manual Review Queue" },
+    style: { 
+      border: "1px solid #E6E6E6", 
+      borderRadius: "0", 
+      padding: "20px", 
+      background: "#fff", 
+      fontSize: "11px", 
+      fontWeight: 500,
+      width: 200,
     }
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: "e1-2", source: "1", target: "2", animated: true, style: { stroke: "#0A8356", strokeWidth: 1.5 } },
-  { id: "e2-3", source: "2", target: "3", style: { stroke: "#E6E6E6", strokeWidth: 1.5 } },
-  { id: "e3-4", source: "3", target: "4", label: "Opened", style: { stroke: "#0A8356", strokeWidth: 1.5 }, labelStyle: { fill: '#0A8356', fontSize: 11, fontWeight: 500 }, labelBgStyle: { fill: '#fff' } },
-  { id: "e3-5", source: "3", target: "5", label: "Ignored", style: { stroke: "#E6E6E6", strokeWidth: 1.5 }, labelStyle: { fill: '#666', fontSize: 11 }, labelBgStyle: { fill: '#fff' } },
+  { id: "e1-2", source: "1", target: "2", animated: true, style: { stroke: "#000", strokeWidth: 1.5 } },
+  { id: "e2-3", source: "2", target: "3", animated: true, style: { stroke: "#0A8356", strokeWidth: 1.5 } },
+  { id: "e3-4", source: "3", target: "4", style: { stroke: "#E6E6E6", strokeWidth: 1.5 } },
+  { id: "e4-5", source: "4", target: "5", label: "Qualified", style: { stroke: "#0A8356", strokeWidth: 1.5 }, labelStyle: { fill: '#0A8356', fontSize: 10, fontWeight: 700 }, labelBgStyle: { fill: '#fff' } },
+  { id: "e4-6", source: "4", target: "6", label: "Low Intent", style: { stroke: "#E6E6E6", strokeWidth: 1.5 }, labelStyle: { fill: '#666', fontSize: 10 }, labelBgStyle: { fill: '#fff' } },
 ];
 
 export function Workflows() {
@@ -91,6 +115,16 @@ export function Workflows() {
   const [edges, setEdges] = useState<Edge[]>(initialEdges);
   const [isDeploying, setIsDeploying] = useState(false);
   const { addToast } = useToast();
+  const workflowRepo = new WorkflowRepository();
+
+  useEffect(() => {
+    workflowRepo.getLatestWorkflow().then(data => {
+      if (data && data.metadata) {
+        setNodes(data.metadata.nodes || initialNodes);
+        setEdges(data.metadata.edges || initialEdges);
+      }
+    });
+  }, []);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -127,13 +161,18 @@ export function Workflows() {
     addToast("New Action Node added to workspace.", "info");
   };
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
     setIsDeploying(true);
     addToast("Validating flow architecture...", "info");
-    setTimeout(() => {
-      setIsDeploying(false);
+    
+    try {
+      await workflowRepo.saveWorkflow("Main Production Flow", nodes, edges);
       addToast("Workflow deployed to active pool.", "success");
-    }, 2000);
+    } catch (error: any) {
+      addToast(`Deployment failed: ${error.message}`, "error");
+    } finally {
+      setIsDeploying(false);
+    }
   };
 
   return (

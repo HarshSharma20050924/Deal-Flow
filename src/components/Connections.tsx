@@ -1,8 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, Database, Webhook, X, Save } from "lucide-react";
+import { ConnectionRepository } from "../repositories/connection.repository";
+import { useToast } from "./ToastContext";
 
 export function Connections() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [webhook, setWebhook] = useState({ url: "", secret: "", events: ["campaign.started"] });
+  const { addToast } = useToast();
+  const connRepo = new ConnectionRepository();
+
+  useEffect(() => {
+    connRepo.getWebhookSettings().then(setWebhook).catch(console.error);
+  }, []);
+
+  const handleSaveWebhook = async () => {
+    try {
+      await connRepo.saveWebhookSettings(webhook);
+      addToast("Webhook endpoint registered successfully.", "success");
+      setActiveModal(null);
+    } catch (error: any) {
+      addToast(`Registration failed: ${error.message}`, "error");
+    }
+  };
 
   const ModalShell = ({ title, children }: { title: string; children: React.ReactNode }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-workspace/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -97,11 +116,23 @@ export function Connections() {
           <div className="space-y-6 text-sm">
             <div>
               <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">Payload URL</label>
-              <input type="url" placeholder="https://api.yourdomain.com/webhook" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" />
+              <input 
+                type="url" 
+                value={webhook.url} 
+                onChange={e => setWebhook({...webhook, url: e.target.value})}
+                placeholder="https://api.yourdomain.com/webhook" 
+                className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">Secret Token (Optional)</label>
-              <input type="password" placeholder="whsec_xxxxx" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" />
+              <input 
+                type="password" 
+                value={webhook.secret}
+                onChange={e => setWebhook({...webhook, secret: e.target.value})}
+                placeholder="whsec_xxxxx" 
+                className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              />
             </div>
             <div className="pt-4 border-t border-border-subtle pb-2">
               <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-4">Events to Send</label>
@@ -110,19 +141,11 @@ export function Connections() {
                   <input type="checkbox" className="accent-brand-accent w-4 h-4 rounded-none" defaultChecked />
                   campaign.started
                 </label>
-                <label className="flex items-center gap-3 text-text-secondary hover:text-text-primary cursor-pointer transition-colors">
-                  <input type="checkbox" className="accent-brand-accent w-4 h-4 rounded-none" defaultChecked />
-                  email.dispatched
-                </label>
-                <label className="flex items-center gap-3 text-text-secondary hover:text-text-primary cursor-pointer transition-colors">
-                  <input type="checkbox" className="accent-brand-accent w-4 h-4 rounded-none" defaultChecked />
-                  lead.replied
-                </label>
               </div>
             </div>
             <div className="pt-4 flex justify-end">
               <button 
-                onClick={() => setActiveModal(null)}
+                onClick={handleSaveWebhook}
                 className="flex items-center text-sm font-medium border border-border-subtle px-6 py-2 transition-colors hover:border-text-primary"
               >
                 Save Configuration <Save className="ml-2 w-4 h-4" />

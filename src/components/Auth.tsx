@@ -1,13 +1,50 @@
 import React, { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { useToast } from "./ToastContext";
 
-export function Auth({ onLogin }: { onLogin: (name: string) => void }) {
+export function Auth() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { addToast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGoogleLogin = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) addToast(error.message, "error");
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(name || "Alex");
+    setIsLoading(true);
+    
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name }
+          }
+        });
+        if (error) throw error;
+        addToast("Check your email for the confirmation link!", "info");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+      }
+    } catch (error: any) {
+      addToast(error.message, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -21,7 +58,7 @@ export function Auth({ onLogin }: { onLogin: (name: string) => void }) {
         </p>
 
         <button 
-          onClick={() => onLogin("Google User")}
+          onClick={handleGoogleLogin}
           className="w-full h-10 mb-8 flex items-center justify-center border border-border-subtle hover:border-text-primary text-sm transition-colors font-medium text-text-secondary hover:text-text-primary"
         >
           <svg className="w-4 h-4 mr-3" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -54,18 +91,33 @@ export function Auth({ onLogin }: { onLogin: (name: string) => void }) {
           )}
           <div>
             <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">Email Address</label>
-            <input type="email" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" placeholder="name@company.com" required />
+            <input 
+              type="email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              placeholder="name@company.com" 
+              required 
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-text-secondary uppercase tracking-wider mb-2">Password</label>
-            <input type="password" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" placeholder="••••••••" required />
+            <input 
+              type="password" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              placeholder="••••••••" 
+              required 
+            />
           </div>
           
           <button 
             type="submit"
-            className="w-full h-10 flex items-center justify-center bg-brand-accent hover:bg-brand-accent-hover text-white text-sm font-medium transition-colors pt-1"
+            disabled={isLoading}
+            className="w-full h-10 flex items-center justify-center bg-brand-accent hover:bg-brand-accent-hover text-white text-sm font-medium transition-colors pt-1 disabled:opacity-50"
           >
-            {isSignUp ? "Create Account" : "Sign In"} <ArrowRight className="ml-2 w-4 h-4 stroke-[1.5]" />
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isSignUp ? "Create Account" : "Sign In")} {!isLoading && <ArrowRight className="ml-2 w-4 h-4 stroke-[1.5]" />}
           </button>
         </form>
 

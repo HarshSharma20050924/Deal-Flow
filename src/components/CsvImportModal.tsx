@@ -1,5 +1,7 @@
 import React, { useState, useRef } from "react";
 import { UploadCloud, CheckCircle2, ArrowRight, X, AlertCircle } from "lucide-react";
+import Papa from "papaparse";
+import { LeadRepository } from "../repositories/lead.repository";
 
 interface Props {
   onClose: () => void;
@@ -9,7 +11,9 @@ interface Props {
 export function CsvImportModal({ onClose, onImport }: Props) {
   const [step, setStep] = useState<"upload" | "map" | "importing">("upload");
   const [file, setFile] = useState<File | null>(null);
+  const [mappings, setMappings] = useState({ name: "name", company: "company", email: "email" });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const leadRepo = new LeadRepository();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -19,10 +23,33 @@ export function CsvImportModal({ onClose, onImport }: Props) {
   };
 
   const handleImport = () => {
+    if (!file) return;
     setStep("importing");
-    setTimeout(() => {
-      onImport();
-    }, 2000);
+
+    Papa.parse(file, {
+      header: true,
+      complete: async (results) => {
+        const leads = results.data.map((row: any) => ({
+          first_name: row[mappings.name]?.split(' ')[0] || '',
+          last_name: row[mappings.name]?.split(' ')[1] || '',
+          email: row[mappings.email] || '',
+          company: row[mappings.company] || '',
+          status: 'new' as const,
+          score: 50,
+          metadata: { source: 'csv_import' }
+        }));
+
+        try {
+          // Batch insert leads
+          for (const lead of leads) {
+             if (lead.email) await leadRepo.create(lead as any);
+          }
+          onImport();
+        } catch (error) {
+          console.error("CSV Import failed", error);
+        }
+      }
+    });
   };
 
   return (

@@ -1,194 +1,141 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useToast } from "./ToastContext";
-import { Send, Users, Shield, CreditCard, ChevronDown, Check } from "lucide-react";
+import { Send, Users, Shield, CreditCard, ChevronDown, Check, Save } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import { PreferenceRepository } from "../repositories/preference.repository";
 
 export function Preferences() {
   const { addToast } = useToast();
+  const [prefs, setPrefs] = useState<any>({
+    sender_name: "",
+    sender_title: "",
+    gemini_api_key: "",
+    daily_limit: 40
+  });
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("Operator");
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   
-  const [pendingInvites, setPendingInvites] = useState<{email: string, role: string}[]>([]);
+  const prefRepo = new PreferenceRepository();
+
+  useEffect(() => {
+    loadAll();
+  }, []);
+
+  const loadAll = async () => {
+    setIsLoading(true);
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      setUser(currentUser);
+      const data = await prefRepo.getPreferences();
+      if (data) setPrefs(data);
+    } catch (error: any) {
+      addToast(`Error loading settings: ${error.message}`, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await prefRepo.updatePreferences(prefs);
+      addToast("Preferences saved to production cluster.", "success");
+    } catch (error: any) {
+      addToast(`Save failed: ${error.message}`, "error");
+    }
+  };
 
   const handleCopy = () => {
     addToast("API Key securely copied to clipboard.", "success");
   };
 
-  const handleInvite = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail) return;
-    
-    addToast(`Inviting ${inviteEmail} as ${inviteRole}...`, "info");
-    
-    setTimeout(() => {
-      addToast(`Invitation delivered to ${inviteEmail}.`, "success");
-      setPendingInvites([...pendingInvites, { email: inviteEmail, role: inviteRole }]);
-      setInviteEmail("");
-    }, 1500);
+  const [isAddingProfile, setIsAddingProfile] = useState(false);
+  const [newProfileName, setNewProfileName] = useState("");
+  const [editingProfile, setEditingProfile] = useState<string | null>(null);
+  const [editProfileName, setEditProfileName] = useState("");
+
+  const getProfilesArray = () => {
+    return user?.user_metadata?.profession_profiles || [user?.user_metadata?.profession || "Software Services"];
   };
+
+  const updateProfilesInSupabase = async (newProfiles: string[], newActive: string) => {
+    try {
+      const { data } = await supabase.auth.updateUser({
+        data: { 
+          profession_profiles: newProfiles,
+          profession: newActive 
+        }
+      });
+      setUser(data.user);
+      addToast(`Active Profile: ${newActive}`, "success");
+    } catch (e: any) {
+      addToast(`Update failed: ${e.message}`, "error");
+    }
+  };
+
+  const saveNewProfile = () => {
+    if (newProfileName && newProfileName.trim()) {
+      const profiles = getProfilesArray();
+      if (!profiles.includes(newProfileName.trim())) {
+        updateProfilesInSupabase([...profiles, newProfileName.trim()], newProfileName.trim());
+      }
+    }
+    setIsAddingProfile(false);
+    setNewProfileName("");
+  };
+
+  const saveEditProfile = (oldName: string) => {
+    if (editProfileName && editProfileName.trim() && editProfileName !== oldName) {
+      const profiles = getProfilesArray();
+      const newProfiles = profiles.map((p: string) => p === oldName ? editProfileName.trim() : p);
+      const active = user?.user_metadata?.profession === oldName ? editProfileName.trim() : (user?.user_metadata?.profession || "Software Services");
+      updateProfilesInSupabase(newProfiles, active);
+    }
+    setEditingProfile(null);
+    setEditProfileName("");
+  };
+
+  const handleRemoveProfile = (name: string) => {
+    const profiles = getProfilesArray();
+    if (profiles.length <= 1) {
+      addToast("You must have at least one profile", "error");
+      return;
+    }
+    if (window.confirm(`Remove ${name}?`)) {
+      const newProfiles = profiles.filter((p: string) => p !== name);
+      const active = user?.user_metadata?.profession === name ? newProfiles[0] : (user?.user_metadata?.profession || "Software Services");
+      updateProfilesInSupabase(newProfiles, active);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="w-8 h-8 rounded-full border-2 border-brand-accent border-t-transparent animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-y-auto p-12 max-w-5xl relative">
-      <div className="mb-12">
-        <h1 className="text-2xl font-medium tracking-tight mb-2">Preferences</h1>
-        <p className="text-sm text-text-secondary">System, account, and billing configuration.</p>
+      <div className="mb-12 flex justify-between items-end">
+        <div>
+          <h1 className="text-2xl font-medium tracking-tight mb-2">Preferences</h1>
+          <p className="text-sm text-text-secondary">System, account, and billing configuration.</p>
+        </div>
+        <button 
+          onClick={handleSave}
+          className="flex items-center text-sm font-medium bg-brand-accent text-white px-6 py-2 hover:bg-brand-accent-hover transition-colors"
+        >
+          <Save className="w-4 h-4 mr-2" /> Save All Changes
+        </button>
       </div>
 
       <div className="space-y-12">
-        {/* TEAM & RBAC MANAGEMENT */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
-          <div>
-            <h2 className="text-sm font-medium mb-2">Workspace Team</h2>
-            <p className="text-xs text-text-secondary leading-relaxed mb-4">Manage members and Role-Based Access Control (RBAC).</p>
-            <div className="bg-bg-workspace p-4 border border-border-subtle">
-              <div className="flex items-start gap-3">
-                 <Shield className="w-4 h-4 text-brand-accent shrink-0 mt-0.5" />
-                 <div>
-                    <h4 className="text-[11px] font-medium text-text-primary uppercase tracking-wider mb-1">Strict Access</h4>
-                    <p className="text-xs text-text-secondary">Operators can manage campaigns. Viewers have read-only access. Only Owners can manage billing.</p>
-                 </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-bg-base p-8 border border-border-subtle flex flex-col">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-4 mb-6">
-                <h3 className="text-sm font-medium">Active Members</h3>
-                <span className="text-xs text-text-secondary">1 / 5 Seats Used</span>
-            </div>
-            
-            <div className="flex items-center justify-between mb-8">
-               <div className="flex items-center gap-4">
-                 <div className="w-10 h-10 bg-text-primary rounded-full flex items-center justify-center text-bg-base text-sm font-medium">
-                   AR
-                 </div>
-                 <div>
-                   <div className="text-sm font-medium">Alex Rostov (You)</div>
-                   <div className="text-xs text-text-secondary mt-0.5">alex@dealflow.io</div>
-                 </div>
-               </div>
-               <span className="text-[11px] font-medium px-2 py-0.5 bg-bg-workspace border border-border-subtle text-text-secondary uppercase tracking-widest">
-                 Owner
-               </span>
-            </div>
-
-            {pendingInvites.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-4 border-b border-border-subtle pb-2">Pending Invitations</h3>
-                {pendingInvites.map((invite, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 border-b border-border-subtle last:border-0 opacity-70">
-                     <span className="text-sm text-text-secondary">{invite.email}</span>
-                     <div className="flex items-center gap-3">
-                       <span className="text-[11px] font-medium text-text-secondary uppercase tracking-wide">{invite.role}</span>
-                       <button className="text-[10px] uppercase text-text-secondary hover:text-red-400 transition-colors">Revoke</button>
-                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            <form onSubmit={handleInvite} className="mt-auto border-t border-border-subtle pt-6">
-              <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-3">Invite Colleague</label>
-              <div className="flex gap-4">
-                <input 
-                  type="email" 
-                  value={inviteEmail}
-                  onChange={e => setInviteEmail(e.target.value)}
-                  placeholder="colleague@domain.com" 
-                  className="flex-1 h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
-                />
-                
-                <div className="relative">
-                  <div 
-                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                    className="h-10 border-b border-border-subtle bg-transparent flex items-center justify-between px-3 min-w-32 cursor-pointer hover:border-text-primary transition-colors"
-                  >
-                    <span className="text-sm text-text-primary">{inviteRole}</span>
-                    <ChevronDown className="w-4 h-4 text-text-secondary ml-2" />
-                  </div>
-                  
-                  {isRoleDropdownOpen && (
-                    <div className="absolute top-12 left-0 w-full bg-bg-base border border-border-subtle shadow-xl z-20">
-                      {['Operator', 'Viewer'].map((role) => (
-                        <div 
-                          key={role}
-                          onClick={() => { setInviteRole(role); setIsRoleDropdownOpen(false); }}
-                          className="px-4 py-2 hover:bg-bg-workspace text-sm cursor-pointer border-b border-border-subtle last:border-0 flex justify-between items-center"
-                        >
-                          {role}
-                          {inviteRole === role && <Check className="w-3.5 h-3.5 text-brand-accent" />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <button 
-                  type="submit"
-                  disabled={!inviteEmail}
-                  className="flex items-center justify-center text-xs font-medium px-6 bg-brand-accent text-white hover:bg-brand-accent-hover transition-colors disabled:opacity-50"
-                >
-                  <Send className="w-3.5 h-3.5 mr-2" /> Send Invite
-                </button>
-              </div>
-            </form>
-          </div>
-        </section>
-
-        {/* BILLING & USAGE */}
-        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
-          <div>
-            <h2 className="text-sm font-medium mb-2">Billing & Usage</h2>
-            <p className="text-xs text-text-secondary leading-relaxed">Monitor your subscription tier, AI token utilization, and payment methods.</p>
-          </div>
-          
-          <div className="space-y-6">
-             <div className="bg-bg-base p-8 border border-border-subtle">
-                <div className="flex items-start justify-between mb-8">
-                  <div>
-                    <h3 className="text-sm font-medium">Enterprise Tier</h3>
-                    <p className="text-xs text-text-secondary mt-1">Billed annually at $2,400/yr.</p>
-                  </div>
-                  <span className="text-[10px] font-medium px-2 py-1 bg-[#E8F5E9] text-[#2E7D32] uppercase tracking-widest border border-[#A5D6A7]">Active</span>
-                </div>
-
-                <div className="space-y-6">
-                   <div>
-                     <div className="flex justify-between text-xs font-medium mb-2">
-                       <span className="text-text-secondary uppercase tracking-wider">AI Drafts Generation</span>
-                       <span className="text-text-primary">1,402 / 5,000</span>
-                     </div>
-                     <div className="h-1.5 w-full bg-bg-workspace overflow-hidden">
-                       <div className="h-full bg-brand-accent w-[28%]" />
-                     </div>
-                   </div>
-                   
-                   <div>
-                     <div className="flex justify-between text-xs font-medium mb-2">
-                       <span className="text-text-secondary uppercase tracking-wider">Lead Verifications</span>
-                       <span className="text-text-primary">8,204 / 10,000</span>
-                     </div>
-                     <div className="h-1.5 w-full bg-bg-workspace overflow-hidden">
-                       <div className="h-full bg-brand-accent w-[82%]" />
-                     </div>
-                   </div>
-                </div>
-
-                <div className="mt-8 pt-6 border-t border-border-subtle flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                    <CreditCard className="w-4 h-4 text-text-secondary" />
-                    <div>
-                      <div className="text-sm font-medium">VISA ending in 4242</div>
-                      <div className="text-[11px] text-text-secondary">Exp 08/2026</div>
-                    </div>
-                  </div>
-                  <button className="text-[11px] font-medium border border-border-subtle hover:border-text-primary px-4 py-2 uppercase tracking-wide transition-colors">
-                    Update Billing
-                  </button>
-                </div>
-             </div>
-          </div>
-        </section>
-
+        {/* PROFILE SECTION */}
         <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
           <div>
             <h2 className="text-sm font-medium mb-2">Profile</h2>
@@ -198,46 +145,158 @@ export function Preferences() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">First Name</label>
-                <input type="text" defaultValue="Alex" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" />
+                <input 
+                  type="text" 
+                  value={prefs.sender_name?.split(' ')[0] || ""} 
+                  onChange={e => setPrefs({...prefs, sender_name: `${e.target.value} ${prefs.sender_name?.split(' ')[1] || ''}`})}
+                  className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+                />
               </div>
               <div>
-                <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Last Name</label>
-                <input type="text" defaultValue="Rostov" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" />
+                <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Title</label>
+                <input 
+                  type="text" 
+                  value={prefs.sender_title || ""} 
+                  onChange={e => setPrefs({...prefs, sender_title: e.target.value})}
+                  className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+                />
               </div>
             </div>
             <div>
               <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Email Address</label>
-              <input type="email" defaultValue="alex@dealflow.io" className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" />
-            </div>
-            <div className="pt-4">
-              <button 
-                onClick={() => addToast("Profile settings saved.", "success")}
-                className="text-[11px] font-medium bg-transparent border border-border-subtle px-4 py-2 hover:border-text-primary hover:bg-bg-workspace transition-colors tracking-wide uppercase"
-              >
-                Save Changes
-              </button>
+              <input type="email" value={user?.email || ""} readOnly className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm text-text-secondary" />
             </div>
           </div>
         </section>
 
-        <section className="grid grid-cols-[1fr_2fr] gap-12 pb-12">
+        {/* BUSINESS PROFILES SECTION */}
+        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
           <div>
-            <h2 className="text-sm font-medium mb-2">API Configuration</h2>
-            <p className="text-xs text-text-secondary leading-relaxed">Manage your authentication tokens for external requests.</p>
+            <h2 className="text-sm font-medium mb-2">Business Identities</h2>
+            <p className="text-xs text-text-secondary leading-relaxed">Define the professional context for your searches and outreach. Add multiple profiles to switch between different sales perspectives.</p>
           </div>
           <div className="space-y-6 bg-bg-base p-8 border border-border-subtle">
-            <div>
-              <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">REST API Key</label>
-              <div className="flex gap-4">
-                <input type="password" defaultValue="df_sk_1234567890abcdef" className="flex-1 h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm text-text-secondary" readOnly />
-                <button 
-                  onClick={handleCopy}
-                  className="text-xs font-medium px-4 border border-border-subtle hover:border-text-primary hover:bg-bg-workspace transition-colors"
+            <div className="space-y-4">
+              {(user?.user_metadata?.profession_profiles || [user?.user_metadata?.profession || "Software Services"]).map((p: string) => (
+                <div 
+                  key={p} 
+                  onClick={() => {
+                    if (editingProfile !== p) {
+                      updateProfilesInSupabase(user?.user_metadata?.profession_profiles || [p], p);
+                    }
+                  }}
+                  className={`flex items-center justify-between p-4 bg-bg-workspace border group transition-colors ${editingProfile === p ? "border-brand-accent cursor-default" : "border-border-subtle hover:border-brand-accent cursor-pointer"}`}
                 >
-                  Copy
+                  {editingProfile === p ? (
+                    <div className="flex-1 flex gap-2">
+                       <input 
+                         type="text" 
+                         autoFocus
+                         className="flex-1 bg-bg-base border border-border-subtle h-8 px-3 text-sm outline-none focus:border-brand-accent"
+                         value={editProfileName}
+                         onChange={(e) => setEditProfileName(e.target.value)}
+                         onKeyDown={(e) => { if (e.key === "Enter") saveEditProfile(p); else if (e.key === "Escape") setEditingProfile(null); }}
+                       />
+                       <button onClick={(e) => { e.stopPropagation(); saveEditProfile(p); }} className="px-3 h-8 bg-brand-accent text-white text-xs font-bold uppercase hover:bg-brand-accent-hover">Save</button>
+                       <button onClick={(e) => { e.stopPropagation(); setEditingProfile(null); }} className="px-3 h-8 border border-border-subtle text-text-secondary text-xs uppercase hover:text-text-primary hover:border-text-secondary">Cancel</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <Check className={`w-4 h-4 ${user?.user_metadata?.profession === p || (!user?.user_metadata?.profession && p === "Software Services") ? "text-brand-accent" : "text-transparent group-hover:text-border-subtle"}`} />
+                        <span className="text-sm font-medium">{p}</span>
+                      </div>
+                      <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditingProfile(p);
+                            setEditProfileName(p);
+                          }}
+                          className="text-[10px] uppercase font-bold text-text-secondary hover:text-text-primary"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleRemoveProfile(p); }}
+                          className="text-[10px] uppercase font-bold text-red-500 hover:text-red-400"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+              
+              {isAddingProfile ? (
+                 <div className="flex items-center gap-2 p-4 bg-bg-workspace border border-brand-accent">
+                    <input 
+                      type="text" 
+                      autoFocus
+                      placeholder="e.g. Freelance Web Developer"
+                      className="flex-1 bg-bg-base border border-border-subtle h-8 px-3 text-sm outline-none focus:border-brand-accent"
+                      value={newProfileName}
+                      onChange={(e) => setNewProfileName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") saveNewProfile(); else if (e.key === "Escape") setIsAddingProfile(false); }}
+                    />
+                    <button onClick={saveNewProfile} className="px-3 h-8 bg-brand-accent text-white text-xs font-bold uppercase hover:bg-brand-accent-hover">Add</button>
+                    <button onClick={() => setIsAddingProfile(false)} className="px-3 h-8 border border-border-subtle text-text-secondary text-xs uppercase hover:text-text-primary hover:border-text-secondary">Cancel</button>
+                 </div>
+              ) : (
+                <button 
+                  onClick={() => setIsAddingProfile(true)}
+                  className="w-full py-3 border border-dashed border-border-subtle text-xs font-medium text-text-secondary hover:text-brand-accent hover:border-brand-accent transition-all"
+                >
+                  + Add Professional Profile
                 </button>
-              </div>
+              )}
             </div>
+          </div>
+        </section>
+
+        {/* WORKSPACE & LIMITS */}
+        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12">
+          <div>
+            <h2 className="text-sm font-medium mb-2">Limits & AI</h2>
+            <p className="text-xs text-text-secondary leading-relaxed mb-4">Manage daily outreach volume and default AI keys.</p>
+          </div>
+          <div className="bg-bg-base p-8 border border-border-subtle space-y-6">
+            <div>
+              <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Daily Sending Limit</label>
+              <input 
+                type="number" 
+                value={prefs.daily_limit} 
+                onChange={e => setPrefs({...prefs, daily_limit: parseInt(e.target.value)})}
+                className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-text-secondary uppercase tracking-wider mb-2">Default Gemini Key (Private)</label>
+              <input 
+                type="password" 
+                value={prefs.gemini_api_key || ""} 
+                onChange={e => setPrefs({...prefs, gemini_api_key: e.target.value})}
+                placeholder="sk-..."
+                className="w-full h-10 border-b border-border-subtle bg-transparent outline-none focus:border-brand-accent transition-colors text-sm" 
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* BILLING & USAGE */}
+        <section className="grid grid-cols-[1fr_2fr] gap-12 border-b border-border-subtle pb-12 opacity-50 filter grayscale pointer-events-none">
+          <div>
+            <h2 className="text-sm font-medium mb-2">Billing & Usage</h2>
+            <p className="text-xs text-text-secondary leading-relaxed">Enterprise billing is managed via organization owner.</p>
+          </div>
+          <div className="bg-bg-base p-8 border border-border-subtle">
+             <div className="flex items-start justify-between mb-8">
+               <div>
+                 <h3 className="text-sm font-medium">Enterprise Tier</h3>
+                 <p className="text-xs text-text-secondary mt-1">Active</p>
+               </div>
+             </div>
           </div>
         </section>
       </div>
