@@ -67,6 +67,14 @@ export function CommandBar() {
         }
       });
 
+      // Trigger GitHub Action
+      try {
+        await fetch('/api/trigger', { method: 'POST' });
+        addToast("Autonomous engine spin-up initiated.", "success");
+      } catch (err) {
+        console.error("Workflow trigger failed:", err);
+      }
+
       // Feedback delay
       setTimeout(() => {
         setIsDeploying(false);
@@ -80,6 +88,7 @@ export function CommandBar() {
     } catch (error: any) {
       console.error("Campaign creation failed:", error);
       setIsDeploying(false);
+      addToast(`Engine launch failed: ${error.message}`, "error");
     }
   };
 

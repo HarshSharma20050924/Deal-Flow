@@ -166,9 +166,24 @@ export function Workflows() {
     addToast("Validating flow architecture...", "info");
     
     try {
+      // 1. Save to Database
       await workflowRepo.saveWorkflow("Main Production Flow", nodes, edges);
-      addToast("Workflow deployed to active pool.", "success");
+      addToast("Workflow configuration saved.", "success");
+
+      // 2. Trigger GitHub Action
+      addToast("Spinning up autonomous engine...", "info");
+      const response = await fetch('/api/trigger', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details?.message || error.error || 'Failed to trigger engine');
+      }
+
+      addToast("Engine live. Finding leads in background.", "success");
     } catch (error: any) {
+      console.error("Deployment error:", error);
       addToast(`Deployment failed: ${error.message}`, "error");
     } finally {
       setIsDeploying(false);
